@@ -43,34 +43,66 @@ data_dict = pickle.load( open("../final_project/final_project_dataset.pkl", "r")
 ### there's an outlier--remove it! 
 data_dict.pop("TOTAL", 0)
 
+### Find min and max stock for scaling
+# from sklearn.preprocessing import MinMaxScaler
 
-### the input features we want to use 
-### can be any key in the person-level dictionary (salary, director_fees, etc.) 
+# salary_list = [ [item['salary'],item['exercised_stock_options']] for item in data_dict.values() ]
+# print(salary_list[0])
+
+value_arr = []
+for name, values in data_dict.iteritems():
+    value = values['salary']
+    if value != "NaN":
+        value_arr.append(value)
+
+print(min(value_arr), max(value_arr))
+### the input features we want to use
+### can be any key in the person-level dictionary (salary, director_fees, etc.)
 feature_1 = "salary"
 feature_2 = "exercised_stock_options"
+feature_3 = "total_payments"
 poi  = "poi"
-features_list = [poi, feature_1, feature_2]
+features_list_2f = [poi, feature_1, feature_2]
+features_list = [poi, feature_1, feature_2, feature_3]
+data_2f = featureFormat(data_dict, features_list_2f )
 data = featureFormat(data_dict, features_list )
+poi_2f, finance_features_2f = targetFeatureSplit( data_2f )
 poi, finance_features = targetFeatureSplit( data )
 
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler().fit(finance_features_2f)
+print(scaler.transform([[200000., 1000000.]])) # NaN values as 0
 
 ### in the "clustering with 3 features" part of the mini-project,
-### you'll want to change this line to 
+### you'll want to change this line to
 ### for f1, f2, _ in finance_features:
 ### (as it's currently written, the line below assumes 2 features)
-for f1, f2 in finance_features:
+for f1, f2, f3 in finance_features:
     plt.scatter( f1, f2 )
+
+plt.xlabel(feature_1)
+plt.ylabel(feature_2)
+plt.savefig("scatterplot_salary_vs_exercised_stock_options.pdf")
 plt.show()
 
 ### cluster here; create predictions of the cluster labels
 ### for the data and store them to a list called pred
 
+from sklearn.cluster import KMeans
 
+kmeans = KMeans(n_clusters=2)
+pred = kmeans.fit_predict( finance_features )
+print(kmeans.labels_)
+print(kmeans.cluster_centers_)
 
 
 ### rename the "name" parameter when you change the number of features
 ### so that the figure gets saved to a different file
 try:
-    Draw(pred, finance_features, poi, mark_poi=False, name="clusters.pdf", f1_name=feature_1, f2_name=feature_2)
+    Draw(pred, finance_features, poi, mark_poi=True, name="clusters_3_features.pdf", f1_name=feature_1, f2_name=feature_2)
+
+    pred = kmeans.fit_predict( finance_features_2f )
+    Draw(pred, finance_features_2f, poi_2f, mark_poi=True, name="clusters_2_features.pdf", f1_name=feature_1, f2_name=feature_2)
 except NameError:
     print "no predictions object named pred found, no clusters to plot"

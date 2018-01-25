@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pickle
 
 from outlier_cleaner import outlierCleaner
-
+from time import time
 
 ### load up some practice data with outliers in it
 ages = pickle.load( open("practice_outliers_ages.pkl", "r") )
@@ -26,15 +26,20 @@ ages_train, ages_test, net_worths_train, net_worths_test = train_test_split(ages
 ### fill in a regression here!  Name the regression object reg so that
 ### the plotting code below works, and you can see what your regression looks like
 
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import accuracy_score
 
+reg = LinearRegression()
+reg.fit(ages_train, net_worths_train)
 
+print reg.coef_
 
+t0 = time()
+pred = reg.predict(ages_test)
+print "Training time is ", round(time()-t0), "s"
 
-
-
-
-
-
+accuracy = reg.score(ages_test, net_worths_test)
+print "Accuracy: ", accuracy, "\n"
 
 try:
     plt.plot(ages, reg.predict(ages), color="blue")
@@ -47,17 +52,13 @@ plt.show()
 ### identify and remove the most outlier-y points
 cleaned_data = []
 try:
+    print "Removing outliers"
     predictions = reg.predict(ages_train)
     cleaned_data = outlierCleaner( predictions, ages_train, net_worths_train )
+
 except NameError:
     print "your regression object doesn't exist, or isn't name reg"
     print "can't make predictions to use in identifying outliers"
-
-
-
-
-
-
 
 ### only run this code if cleaned_data is returning data
 if len(cleaned_data) > 0:
@@ -68,6 +69,8 @@ if len(cleaned_data) > 0:
     ### refit your cleaned data!
     try:
         reg.fit(ages, net_worths)
+        print reg.score(ages_test, net_worths_test)
+        print reg.coef_
         plt.plot(ages, reg.predict(ages), color="blue")
     except NameError:
         print "you don't seem to have regression imported/created,"
